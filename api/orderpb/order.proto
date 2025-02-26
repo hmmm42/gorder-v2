@@ -1,7 +1,7 @@
 syntax = "proto3";
 package orderpb;
 
-option go_package = "github.com/hmmm42/gorder-v2/internal/genproto/orderpb";
+option go_package = "github.com/hmmm42/gorder-v2/common/genproto/orderpb";
 
 import "google/protobuf/empty.proto";
 service OrderService {
