@@ -60,14 +60,14 @@ func (m *MemoryOrderRepository) Get(_ context.Context, id, customerID string) (*
 	return nil, domain.NotFoundError{OrderID: id}
 }
 
-func (m *MemoryOrderRepository) Update(_ context.Context, order *domain.Order, updateFn func(context.Context, *domain.Order) (*domain.Order, error)) error {
+func (m *MemoryOrderRepository) Update(ctx context.Context, order *domain.Order, updateFn func(context.Context, *domain.Order) (*domain.Order, error)) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	found := false
 	for i, o := range m.store {
 		if o.ID == o.ID && o.CustomerID == o.CustomerID {
 			found = true
-			updatedOrder, err := updateFn(context.Background(), o)
+			updatedOrder, err := updateFn(ctx, order)
 			if err != nil {
 				return err
 			}
