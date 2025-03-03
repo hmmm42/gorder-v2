@@ -2,17 +2,21 @@ package command
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/hmmm42/gorder-v2/common/broker"
 	"github.com/hmmm42/gorder-v2/common/decorator"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
 	"github.com/hmmm42/gorder-v2/order/app/query"
 	domain "github.com/hmmm42/gorder-v2/order/domain/order"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
 
 type CreateOrder struct {
 	CustomerID string
 	Items      []*orderpb.ItemWithQuantity
+	channel    *amqp.Channel
 }
 
 type CreateOrderResult struct {
@@ -24,19 +28,31 @@ type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult
 type createOrderHandler struct {
 	orderRepo domain.Repository
 	stockGRPC query.StockService
+	channel   *amqp.Channel
 }
 
 func NewCreateOrderHandler(
 	orderRepo domain.Repository,
 	stockGRPC query.StockService,
+	channel *amqp.Channel,
 	logger *logrus.Entry,
 	metricClient decorator.MetricsClient,
 ) CreateOrderHandler {
 	if orderRepo == nil {
 		panic("orderRepo is nil")
 	}
+	if stockGRPC == nil {
+		panic("stockGRPC is nil")
+	}
+	if channel == nil {
+		panic("channel is nil")
+	}
 	return decorator.ApplyCommandDecorators[CreateOrder, *CreateOrderResult](
-		createOrderHandler{orderRepo: orderRepo, stockGRPC: stockGRPC},
+		createOrderHandler{
+			orderRepo: orderRepo,
+			stockGRPC: stockGRPC,
+			channel:   channel,
+		},
 		logger,
 		metricClient,
 	)
@@ -54,6 +70,25 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	if err != nil {
 		return nil, err
 	}
+
+	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	marshalledOrder, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	err = c.channel.PublishWithContext(ctx, "", q.Name, false, false, amqp.Publishing{
+		ContentType:  "application/json",
+		DeliveryMode: amqp.Persistent,
+		Body:         marshalledOrder,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &CreateOrderResult{OrderID: o.ID}, nil
 }
 
