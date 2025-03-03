@@ -4,4 +4,7 @@ go 1.22.12
 
 toolchain go1.24.0
 
-require github.com/rabbitmq/amqp091-go v1.10.0 // indirect
+require (
+	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
+	github.com/stripe/stripe-go/v81 v81.4.0 // indirect
+)
