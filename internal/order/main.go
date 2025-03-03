@@ -6,6 +6,7 @@ import (
 	"github.com/hmmm42/gorder-v2/common/config"
 	"github.com/hmmm42/gorder-v2/common/discovery"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
+	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/hmmm42/gorder-v2/common/server"
 	"github.com/hmmm42/gorder-v2/order/ports"
 	"github.com/hmmm42/gorder-v2/order/service"
@@ -15,6 +16,7 @@ import (
 )
 
 func init() {
+	logging.Init()
 	if err := config.NewViperConfig(); err != nil {
 		logrus.Fatal(err)
 	}

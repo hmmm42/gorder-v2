@@ -23,13 +23,13 @@ func NewApplication(ctx context.Context) (app.Application, func()) {
 	}
 }
 
-func newApplication(_ context.Context, stockClient query.StockService) app.Application {
+func newApplication(_ context.Context, stockGRPC query.StockService) app.Application {
 	orderRepo := adapters.NewMemoryOrderRepository()
 	logger := logrus.NewEntry(logrus.StandardLogger())
 	metricsClient := metrics.TodoMetrics{}
 	return app.Application{
 		Commands: app.Commands{
-			CreateOrder: command.NewCreateOrderHandler(orderRepo, stockClient, logger, metricsClient),
+			CreateOrder: command.NewCreateOrderHandler(orderRepo, stockGRPC, logger, metricsClient),
 			UpdateOrder: command.NewUpdateOrderHandler(orderRepo, logger, metricsClient),
 		},
 		Queries: app.Queries{
