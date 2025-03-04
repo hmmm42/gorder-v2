@@ -2,11 +2,12 @@ package adapters
 
 import (
 	"context"
-	domain "github.com/hmmm42/gorder-v2/order/domain/order"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 	"time"
+
+	domain "github.com/hmmm42/gorder-v2/order/domain/order"
+	"github.com/sirupsen/logrus"
 )
 
 type MemoryOrderRepository struct {
@@ -65,7 +66,7 @@ func (m *MemoryOrderRepository) Update(ctx context.Context, order *domain.Order,
 	defer m.lock.Unlock()
 	found := false
 	for i, o := range m.store {
-		if o.ID == o.ID && o.CustomerID == o.CustomerID {
+		if o.ID == order.ID && o.CustomerID == order.CustomerID {
 			found = true
 			updatedOrder, err := updateFn(ctx, order)
 			if err != nil {

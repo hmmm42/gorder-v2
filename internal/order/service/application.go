@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/hmmm42/gorder-v2/common/broker"
 	grpcClient "github.com/hmmm42/gorder-v2/common/client"
 	"github.com/hmmm42/gorder-v2/common/metrics"

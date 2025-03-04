@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+
 	"github.com/hmmm42/gorder-v2/common/genproto/stockpb"
 	"github.com/hmmm42/gorder-v2/stock/app"
 	"github.com/hmmm42/gorder-v2/stock/app/query"

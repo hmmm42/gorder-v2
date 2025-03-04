@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/hmmm42/gorder-v2/common/broker"
 	"github.com/hmmm42/gorder-v2/order/app"
 	"github.com/hmmm42/gorder-v2/order/app/command"

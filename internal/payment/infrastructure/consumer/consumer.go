@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/hmmm42/gorder-v2/common/broker"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
 	"github.com/hmmm42/gorder-v2/payment/app"
@@ -35,15 +36,15 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	var forever chan struct{}
 	go func() {
 		for msg := range msgs {
-			c.handleMessage(msg)
+			c.handleMessage(msg, q)
 		}
 	}()
 	//goland:noinspection GoDfaNilDereference
 	<-forever
 }
 
-func (c *Consumer) handleMessage(msg amqp.Delivery) {
-	logrus.Infof("Payment receive a message from %s, msg=%v", broker.EventOrderCreated, string(msg.Body))
+func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
+	logrus.Infof("Payment receive a message from %s, msg=%v", q.Name, string(msg.Body))
 
 	o := &orderpb.Order{}
 	if err := json.Unmarshal(msg.Body, o); err != nil {

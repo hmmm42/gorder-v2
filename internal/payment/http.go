@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/hmmm42/gorder-v2/common/broker"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
@@ -12,8 +15,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/webhook"
-	"io"
-	"net/http"
 )
 
 type PaymentHandler struct {
