@@ -38,6 +38,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 			c.handleMessage(msg)
 		}
 	}()
+	//goland:noinspection GoDfaNilDereference
 	<-forever
 }
 
