@@ -77,6 +77,12 @@ components:
   schemas:
     Order:
       type: object
+      required:
+        - id
+        - customerID
+        - status
+        - items
+        - paymentLink
       properties:
         id:
           type: string
@@ -93,6 +99,11 @@ components:
 
     Item:
       type: object
+      required:
+        - id
+        - name
+        - quantity
+        - priceID
       properties:
         id:
           type: string
@@ -131,6 +142,6 @@ components:
       properties:
         itemID:
           type: string
-          quantity:
-            type: integer
-            format: int32
+        quantity:
+          type: integer
+          format: int32
