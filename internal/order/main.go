@@ -33,7 +33,9 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	defer shutdown(ctx)
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 
 	application, cleanup := service.NewApplication(ctx)
 	defer cleanup()
