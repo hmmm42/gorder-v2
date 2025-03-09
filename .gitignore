@@ -25,7 +25,11 @@ go.work.sum
 .env
 .envrc
 .idea
+.DS_Store
 
 .gobincache/
 **/tmp
 **/bin
+
+mysql_data
+data
