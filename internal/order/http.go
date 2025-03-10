@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hmmm42/gorder-v2/common"
 	client "github.com/hmmm42/gorder-v2/common/client/order"
+	"github.com/hmmm42/gorder-v2/common/consts"
+	"github.com/hmmm42/gorder-v2/common/handler/errors"
 	"github.com/hmmm42/gorder-v2/order/app"
 	"github.com/hmmm42/gorder-v2/order/app/command"
 	"github.com/hmmm42/gorder-v2/order/app/dto"
@@ -29,9 +31,11 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 	}()
 
 	if err = c.ShouldBindJSON(&req); err != nil {
+		err = errors.NewWithError(consts.ErrorBindRequestError, err)
 		return
 	}
 	if err = H.validate(req); err != nil {
+		err = errors.NewWithError(consts.ErrorRequestValidateError, err)
 		return
 	}
 	r, err := H.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrder{
@@ -39,6 +43,7 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 		Items:      convertor.NewItemWithQuantityConvertor().ClientsToEntities(req.Items),
 	})
 	if err != nil {
+		//err = errors.NewWithError(err)
 		return
 	}
 
@@ -70,7 +75,7 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 func (H HTTPServer) validate(req client.CreateOrderRequest) error {
 	for _, item := range req.Items {
 		if item.Quantity <= 0 {
-			return fmt.Errorf("quantity must be positive")
+			return fmt.Errorf("quantity must be positive, got %d from %s", item.Quantity, item.Id)
 		}
 	}
 	return nil
