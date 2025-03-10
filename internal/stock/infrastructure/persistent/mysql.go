@@ -63,6 +63,17 @@ func (d MySQL) StartTransaction(f func(tx *gorm.DB) error) error {
 	return d.db.Transaction(f)
 }
 
+func (d MySQL) GetStockByID(ctx context.Context, query *builder.Stock) (*StockModel, error) {
+	_, deferLog := logging.WhenMySQL(ctx, "GetStockByID", query)
+	var result StockModel
+	tx := query.Fill(d.db.WithContext(ctx)).First(&result)
+	defer deferLog(result, &tx.Error)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return &result, nil
+}
+
 func (d MySQL) BatchGetStockByID(ctx context.Context, query *builder.Stock) ([]StockModel, error) {
 	_, deferLog := logging.WhenMySQL(ctx, "BatchGetStockByID", query)
 	var result []StockModel
@@ -74,10 +85,25 @@ func (d MySQL) BatchGetStockByID(ctx context.Context, query *builder.Stock) ([]S
 	return result, nil
 }
 
-func (d MySQL) Create(ctx context.Context, create *StockModel) error {
+func (d MySQL) Create(ctx context.Context, tx *gorm.DB, create *StockModel) error {
 	_, deferLog := logging.WhenMySQL(ctx, "Create", create)
 	var returning StockModel
-	err := d.db.WithContext(ctx).Model(&returning).Clauses(clause.Returning{}).Create(create).Error
+	err := d.UseTransaction(tx).WithContext(ctx).Model(&returning).Clauses(clause.Returning{}).Create(create).Error
 	defer deferLog(returning, &err)
 	return err
+}
+
+func (d MySQL) Update(ctx context.Context, tx *gorm.DB, cond *builder.Stock, update map[string]any) error {
+	_, deferLog := logging.WhenMySQL(ctx, "Update", cond, update)
+	var returning StockModel
+	err := cond.Fill(d.UseTransaction(tx).WithContext(ctx).Model(&returning).Clauses(clause.Returning{})).Updates(update).Error
+	defer deferLog(returning, &err)
+	return err
+}
+
+func (d MySQL) UseTransaction(tx *gorm.DB) *gorm.DB {
+	if tx == nil {
+		return d.db
+	}
+	return tx
 }

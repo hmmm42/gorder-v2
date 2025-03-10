@@ -1,4 +1,4 @@
-module github.com/hmmm42/gorder-v2/order
+module github.com/hmmm42/gorder-v2/OrderBy
 
 go 1.22.8
 
