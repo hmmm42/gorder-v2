@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hmmm42/gorder-v2/common/logging"
+	"github.com/hmmm42/gorder-v2/stock/infrastructure/persistent/builder"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type MySQL struct {
@@ -20,8 +23,8 @@ type StockModel struct {
 	ProductID string    `gorm:"column:product_id"`
 	Quantity  int32     `gorm:"column:quantity"`
 	Version   int64     `gorm:"column:version"`
-	CreatedAt time.Time `gorm:"column:created_at"`
-	UpdateAt  time.Time `gorm:"column:updated_at"`
+	CreatedAt time.Time `gorm:"column:created_at autoCreate_time"`
+	UpdateAt  time.Time `gorm:"column:updated_at autoUpdate_time"`
 }
 
 func NewMySQL() *MySQL {
@@ -37,6 +40,9 @@ func NewMySQL() *MySQL {
 	if err != nil {
 		logrus.Panicf("connect to mysql failed, err=%v", err)
 	}
+	_ = db.Callback().Create().Before("gorm:create").Register("set_create_time", func(d *gorm.DB) {
+		d.Statement.SetColumn("CreatedAt", time.Now().Format(time.DateTime))
+	})
 	return &MySQL{db: db}
 }
 
@@ -57,15 +63,21 @@ func (d MySQL) StartTransaction(f func(tx *gorm.DB) error) error {
 	return d.db.Transaction(f)
 }
 
-func (d MySQL) BatchGetStockByID(ctx context.Context, productIDs []string) ([]StockModel, error) {
+func (d MySQL) BatchGetStockByID(ctx context.Context, query *builder.Stock) ([]StockModel, error) {
+	_, deferLog := logging.WhenMySQL(ctx, "BatchGetStockByID", query)
 	var result []StockModel
-	err := d.db.WithContext(ctx).Where("product_id IN ?", productIDs).Find(&result).Error
-	if err != nil {
-		return nil, err
+	tx := query.Fill(d.db.WithContext(ctx).Clauses(clause.Returning{})).Find(&result)
+	defer deferLog(result, &tx.Error)
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 	return result, nil
 }
 
 func (d MySQL) Create(ctx context.Context, create *StockModel) error {
-	return d.db.WithContext(ctx).Create(create).Error
+	_, deferLog := logging.WhenMySQL(ctx, "Create", create)
+	var returning StockModel
+	err := d.db.WithContext(ctx).Model(&returning).Clauses(clause.Returning{}).Create(create).Error
+	defer deferLog(returning, &err)
+	return err
 }
