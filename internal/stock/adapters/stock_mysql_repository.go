@@ -3,7 +3,7 @@ package adapters
 import (
 	"context"
 
-	"github.com/hmmm42/gorder-v2/stock/entity"
+	"github.com/hmmm42/gorder-v2/common/entity"
 	"github.com/hmmm42/gorder-v2/stock/infrastructure/persistent"
 	"github.com/hmmm42/gorder-v2/stock/infrastructure/persistent/builder"
 	"github.com/pkg/errors"

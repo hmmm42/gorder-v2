@@ -4,9 +4,9 @@ import (
 	"context"
 
 	_ "github.com/hmmm42/gorder-v2/common/config"
+	"github.com/hmmm42/gorder-v2/common/entity"
 	"github.com/hmmm42/gorder-v2/common/logging"
 	domain "github.com/hmmm42/gorder-v2/order/domain/order"
-	"github.com/hmmm42/gorder-v2/order/entity"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

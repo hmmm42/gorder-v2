@@ -7,12 +7,12 @@ import (
 	"github.com/hmmm42/gorder-v2/common"
 	client "github.com/hmmm42/gorder-v2/common/client/order"
 	"github.com/hmmm42/gorder-v2/common/consts"
+	"github.com/hmmm42/gorder-v2/common/convertor"
 	"github.com/hmmm42/gorder-v2/common/handler/errors"
 	"github.com/hmmm42/gorder-v2/order/app"
 	"github.com/hmmm42/gorder-v2/order/app/command"
 	"github.com/hmmm42/gorder-v2/order/app/dto"
 	"github.com/hmmm42/gorder-v2/order/app/query"
-	"github.com/hmmm42/gorder-v2/order/convertor"
 )
 
 type HTTPServer struct {
@@ -69,7 +69,13 @@ func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerI
 	if err != nil {
 		return
 	}
-	resp = convertor.NewOrderConvertor().EntityToClient(o)
+	resp = client.Order{
+		CustomerId:  o.CustomerID,
+		Id:          o.ID,
+		Items:       convertor.NewItemConvertor().EntitiesToClients(o.Items),
+		PaymentLink: o.PaymentLink,
+		Status:      o.Status,
+	}
 }
 
 func (H HTTPServer) validate(req client.CreateOrderRequest) error {

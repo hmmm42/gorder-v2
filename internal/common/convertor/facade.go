@@ -19,21 +19,21 @@ var (
 
 func NewOrderConvertor() *OrderConvertor {
 	orderOnce.Do(func() {
-		orderConvertor = &OrderConvertor{}
+		orderConvertor = new(OrderConvertor)
 	})
 	return orderConvertor
 }
 
 func NewItemConvertor() *ItemConvertor {
 	itemOnce.Do(func() {
-		itemConvertor = &ItemConvertor{}
+		itemConvertor = new(ItemConvertor)
 	})
 	return itemConvertor
 }
 
 func NewItemWithQuantityConvertor() *ItemWithQuantityConvertor {
 	itemWithQuantityOnce.Do(func() {
-		itemWithQuantityConvertor = &ItemWithQuantityConvertor{}
+		itemWithQuantityConvertor = new(ItemWithQuantityConvertor)
 	})
 	return itemWithQuantityConvertor
 }

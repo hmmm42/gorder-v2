@@ -3,15 +3,16 @@ package command
 import (
 	"context"
 
+	"github.com/hmmm42/gorder-v2/common/convertor"
 	"github.com/hmmm42/gorder-v2/common/decorator"
-	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
+	"github.com/hmmm42/gorder-v2/common/entity"
 	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/hmmm42/gorder-v2/payment/domain"
 	"github.com/sirupsen/logrus"
 )
 
 type CreatePayment struct {
-	Order *orderpb.Order
+	Order *entity.Order
 }
 
 type CreatePaymentHandler decorator.CommandHandler[CreatePayment, string]
@@ -41,13 +42,13 @@ func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (st
 	if err != nil {
 		return "", err
 	}
-	newOrder := &orderpb.Order{
+	newOrder := &entity.Order{
 		ID:          cmd.Order.ID,
 		CustomerID:  cmd.Order.CustomerID,
 		Status:      "waiting_for_payment",
 		Items:       cmd.Order.Items,
 		PaymentLink: link,
 	}
-	err = c.orderGRPC.UpdateOrder(ctx, newOrder)
+	err = c.orderGRPC.UpdateOrder(ctx, convertor.NewOrderConvertor().EntityToProto(newOrder))
 	return link, err
 }
