@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hmmm42/gorder-v2/common/decorator"
+	"github.com/hmmm42/gorder-v2/common/logging"
 	domain "github.com/hmmm42/gorder-v2/order/domain/order"
 	"github.com/sirupsen/logrus"
 )
@@ -35,11 +36,10 @@ func NewUpdateOrderHandler(
 }
 
 func (c updateOrderHandler) Handle(ctx context.Context, cmd UpdateOrder) (interface{}, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "UpdateOrderHandler", cmd, err)
 	if cmd.UpdateFn == nil {
-		logrus.Warnf("UpdateFn is nil, order=%v, using default update function", cmd.Order)
-		cmd.UpdateFn = func(_ context.Context, order *domain.Order) (*domain.Order, error) {
-			return order, nil
-		}
+		logrus.Panicf("UpdateOrderHandler got nil order, cmd=%+v", cmd)
 	}
 	if err := c.orderRepo.Update(ctx, cmd.Order, cmd.UpdateFn); err != nil {
 		return nil, err

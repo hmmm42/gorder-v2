@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/hmmm42/gorder-v2/common/config"
+	"github.com/hmmm42/gorder-v2/common/logging"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -63,7 +64,12 @@ func createDLX(ch *amqp.Channel) error {
 	return err
 }
 
-func HandleRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error {
+func HandleRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) (err error) {
+	fields, dLog := logging.WhenRequest(ctx, "HandleRetry", map[string]any{
+		"delivery":        d,
+		"max_retry_count": maxRetryCount,
+	})
+	defer dLog(nil, &err)
 	if d.Headers == nil {
 		d.Headers = amqp.Table{}
 	}
@@ -73,10 +79,11 @@ func HandleRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error 
 	}
 	retryCount++
 	d.Headers[amqpRetryHeaderKey] = retryCount
+	fields["retry_count"] = retryCount
 
 	if retryCount >= maxRetryCount {
-		logrus.Infof("moving message %s to dlq", d.MessageId)
-		return ch.PublishWithContext(ctx, "", DLQ, false, false, amqp.Publishing{
+		logging.Infof(ctx, nil, "moving message %s to dlq", d.MessageId)
+		return doPublish(ctx, ch, "", DLQ, false, false, amqp.Publishing{
 			Headers:      d.Headers,
 			ContentType:  "application/json",
 			Body:         d.Body,
@@ -84,9 +91,9 @@ func HandleRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error 
 		})
 	}
 
-	logrus.Infof("retrying message %s, count=%d", d.MessageId, retryCount)
+	logging.Debugf(ctx, nil, "retrying message %s, count=%d", d.MessageId, retryCount)
 	time.Sleep(time.Second * time.Duration(retryCount))
-	return ch.PublishWithContext(ctx, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
+	return doPublish(ctx, ch, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
 		Headers:      d.Headers,
 		ContentType:  "application/json",
 		Body:         d.Body,
@@ -94,7 +101,7 @@ func HandleRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error 
 	})
 }
 
-type RabbitMQHeaderCarrier map[string]interface{}
+type RabbitMQHeaderCarrier map[string]any
 
 func (r RabbitMQHeaderCarrier) Get(key string) string {
 	value, ok := r[key]
@@ -118,12 +125,12 @@ func (r RabbitMQHeaderCarrier) Keys() []string {
 	return keys
 }
 
-func InjectRabbitMQHeaders(ctx context.Context) map[string]interface{} {
+func InjectRabbitMQHeaders(ctx context.Context) map[string]any {
 	carrier := make(RabbitMQHeaderCarrier)
 	otel.GetTextMapPropagator().Inject(ctx, carrier)
 	return carrier
 }
 
-func ExtractRabbitMQHeaders(ctx context.Context, headers map[string]interface{}) context.Context {
+func ExtractRabbitMQHeaders(ctx context.Context, headers map[string]any) context.Context {
 	return otel.GetTextMapPropagator().Extract(ctx, RabbitMQHeaderCarrier(headers))
 }

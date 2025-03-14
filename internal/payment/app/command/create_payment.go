@@ -5,6 +5,7 @@ import (
 
 	"github.com/hmmm42/gorder-v2/common/decorator"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
+	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/hmmm42/gorder-v2/payment/domain"
 	"github.com/sirupsen/logrus"
 )
@@ -34,11 +35,12 @@ func NewCreatePaymentHandler(
 }
 
 func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (string, error) {
+	var err error
+	defer logging.WhenCommandExecute(ctx, "CreatePaymentHandler", cmd, err)
 	link, err := c.processor.CreatePaymentLink(ctx, cmd.Order)
 	if err != nil {
 		return "", err
 	}
-	logrus.Infof("create payment link for order: %s success, payment link: %s", cmd.Order.ID, link)
 	newOrder := &orderpb.Order{
 		ID:          cmd.Order.ID,
 		CustomerID:  cmd.Order.CustomerID,

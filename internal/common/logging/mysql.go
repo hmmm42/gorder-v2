@@ -35,7 +35,7 @@ func WhenMySQL(ctx context.Context, method string, args ...any) (logrus.Fields, 
 			level, msg = logrus.ErrorLevel, "mysql_error"
 			fields[Error] = (*err).Error()
 		}
-		logrus.WithContext(ctx).WithFields(fields).Logf(level, "%s", msg)
+		logf(ctx, level, fields, "%s", msg)
 	}
 }
 
