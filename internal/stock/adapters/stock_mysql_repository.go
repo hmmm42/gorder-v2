@@ -72,10 +72,7 @@ func (m MySQLStockRepository) GetStock(ctx context.Context, ids []string) ([]*en
 func (m MySQLStockRepository) unmarshalFromDatabase(dest []persistent.StockModel) []*entity.ItemWithQuantity {
 	var result []*entity.ItemWithQuantity
 	for _, d := range dest {
-		result = append(result, &entity.ItemWithQuantity{
-			ID:       d.ProductID,
-			Quantity: d.Quantity,
-		})
+		result = append(result, entity.NewItemWithQuantity(d.ProductID, d.Quantity))
 	}
 	return result
 
