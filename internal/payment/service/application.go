@@ -28,7 +28,7 @@ func NewApplication(ctx context.Context) (app.Application, func()) {
 }
 
 func newApplication(_ context.Context, orderGRPC command.OrderService, processor domain.Processor) app.Application {
-	logger := logrus.NewEntry(logrus.StandardLogger())
+	logger := logrus.StandardLogger()
 	metricClient := metrics.TodoMetrics{}
 	return app.Application{
 		Commands: app.Commands{

@@ -44,7 +44,7 @@ func NewApplication(ctx context.Context) (app.Application, func()) {
 func newApplication(_ context.Context, stockGRPC query.StockService, ch *amqp.Channel) app.Application {
 	mongoClient := newMongoClient()
 	orderRepo := adapters.NewOrderRepositoryMongo(mongoClient)
-	logger := logrus.NewEntry(logrus.StandardLogger())
+	logger := logrus.StandardLogger()
 	metricsClient := metrics.TodoMetrics{}
 	return app.Application{
 		Commands: app.Commands{

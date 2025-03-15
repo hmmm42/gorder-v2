@@ -7,14 +7,64 @@ import (
 	"time"
 
 	"github.com/hmmm42/gorder-v2/common/tracing"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 func Init() {
 	SetFormatter(logrus.StandardLogger())
 	logrus.SetLevel(logrus.DebugLevel)
+	setOutPut(logrus.StandardLogger())
 	logrus.AddHook(&traceHook{})
+}
+
+func setOutPut(logger *logrus.Logger) {
+	var (
+		folder    = "./log/"
+		filePath  = "app.log"
+		errorPath = "error.log"
+	)
+	if err := os.MkdirAll(folder, 0750); err != nil && !os.IsExist(err) {
+		panic(err)
+	}
+	file, err := os.OpenFile(folder+filePath, os.O_CREATE|os.O_RDWR, 0755)
+	if err != nil {
+		panic(err)
+	}
+	_, err = os.OpenFile(errorPath, os.O_CREATE|os.O_RDWR, 0755)
+	if err != nil {
+		panic(err)
+	}
+
+	logger.SetOutput(file)
+
+	rotateInfo, err := rotatelogs.New(
+		folder+filePath+".%Y%m%d",
+		rotatelogs.WithLinkName("app.log"),
+		rotatelogs.WithMaxAge(7*24*time.Hour),
+		rotatelogs.WithRotationTime(1*time.Hour),
+	)
+	if err != nil {
+		panic(err)
+	}
+	rotateError, err := rotatelogs.New(
+		folder+errorPath+".%Y%m%d",
+		rotatelogs.WithLinkName("error.log"),
+		rotatelogs.WithMaxAge(7*24*time.Hour),
+		rotatelogs.WithRotationTime(1*time.Hour),
+	)
+	rotationMap := lfshook.WriterMap{
+		logrus.DebugLevel: rotateInfo,
+		logrus.InfoLevel:  rotateInfo,
+		logrus.WarnLevel:  rotateError,
+		logrus.ErrorLevel: rotateError,
+		logrus.FatalLevel: rotateError,
+		logrus.PanicLevel: rotateError,
+	}
+	logrus.AddHook(lfshook.NewHook(rotationMap, &logrus.JSONFormatter{
+		TimestampFormat: time.DateTime,
+	}))
 }
 
 func SetFormatter(logger *logrus.Logger) {
@@ -27,11 +77,11 @@ func SetFormatter(logger *logrus.Logger) {
 		},
 	})
 	if isLocal, _ := strconv.ParseBool(os.Getenv("LOCAL_ENV")); isLocal {
-		logger.SetFormatter(&prefixed.TextFormatter{
-			ForceColors:     true,
-			ForceFormatting: true,
-			TimestampFormat: time.RFC3339,
-		})
+		//logger.SetFormatter(&prefixed.TextFormatter{
+		//	ForceColors:     true,
+		//	ForceFormatting: true,
+		//	TimestampFormat: time.RFC3339,
+		//})
 	}
 }
 

@@ -33,3 +33,5 @@ go.work.sum
 
 mysql_data
 data
+**/log
+*.log

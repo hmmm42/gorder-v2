@@ -33,7 +33,7 @@ type checkIfItemsInStockHandler struct {
 func NewCheckIfItemsInStockHandler(
 	stockRepo domain.Repository,
 	stripeAPI *integration.StripeAPI,
-	logger *logrus.Entry,
+	logger *logrus.Logger,
 	metricClient decorator.MetricsClient,
 ) CheckIfItemsInStockHandler {
 	if stockRepo == nil {
@@ -58,17 +58,28 @@ var stub = map[string]string{
 	"2": "price_1QyoB0GHy2qP0Z7n6ZcfsoQs",
 }
 
-func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*entity.Item, error) {
-	if err := lock(ctx, getLockKey(query)); err != nil {
+func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) (res []*entity.Item, err error) {
+	if err = lock(ctx, getLockKey(query)); err != nil {
 		return nil, errors.Wrapf(err, "redis lock error: key=%s", getLockKey(query))
 	}
 	defer func() {
-		if err := unlock(ctx, getLockKey(query)); err != nil {
+		if err = unlock(ctx, getLockKey(query)); err != nil {
 			logging.Warnf(ctx, nil, "redis unlock fail, err=%v", err)
 		}
 	}()
 
-	var res []*entity.Item
+	defer func() {
+		f := logrus.Fields{
+			"query": query,
+			"res":   res,
+		}
+		if err != nil {
+			logging.Errorf(ctx, f, "checkIfItemsInStock err=%v", err)
+		} else {
+			logging.Infof(ctx, f, "%s", "checkIfItemsInStock success")
+		}
+	}()
+
 	for _, item := range query.Items {
 		priceID, err := h.stripeAPI.GetPriceByProductID(ctx, item.ID)
 		if err != nil || priceID == "" {
@@ -76,7 +87,7 @@ func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfIte
 		}
 		res = append(res, entity.NewItem(item.ID, "", item.Quantity, priceID))
 	}
-	if err := h.checkStock(ctx, query.Items); err != nil {
+	if err = h.checkStock(ctx, query.Items); err != nil {
 		return nil, err
 	}
 	return res, nil

@@ -15,7 +15,7 @@ import (
 func NewApplication(_ context.Context) app.Application {
 	db := persistent.NewMySQL()
 	stockRepo := adapters.NewMySQLStockRepository(db)
-	logger := logrus.NewEntry(logrus.StandardLogger())
+	logger := logrus.StandardLogger()
 	stripeAPI := integration.NewStripeAPI()
 	metricClient := metrics.TodoMetrics{}
 	return app.Application{
