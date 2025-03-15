@@ -10,6 +10,7 @@ import (
 	"github.com/hmmm42/gorder-v2/stock/infrastructure/integration"
 	"github.com/hmmm42/gorder-v2/stock/infrastructure/persistent"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func NewApplication(_ context.Context) app.Application {
@@ -17,7 +18,10 @@ func NewApplication(_ context.Context) app.Application {
 	stockRepo := adapters.NewMySQLStockRepository(db)
 	logger := logrus.StandardLogger()
 	stripeAPI := integration.NewStripeAPI()
-	metricClient := metrics.TodoMetrics{}
+	metricClient := metrics.NewPrometheusMetricsClient(&metrics.PrometheusMetricsClientConfig{
+		Host:        viper.GetString("stock.metrics_export_addr"),
+		ServiceName: viper.GetString("stock.service-name"),
+	})
 	return app.Application{
 		Commands: app.Commands{},
 		Queries: app.Queries{
