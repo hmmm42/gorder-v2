@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hmmm42/gorder-v2/common/broker"
+	"github.com/hmmm42/gorder-v2/common/consts"
 	"github.com/hmmm42/gorder-v2/common/convertor"
 	"github.com/hmmm42/gorder-v2/common/entity"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
@@ -76,7 +77,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 		err = errors.Wrap(err, "error unmarshal msg.body into order")
 		return
 	}
-	if o.Status != "paid" {
+	if o.Status != consts.OrderStatusPaid {
 		err = errors.New("order not paid, cannot cook")
 		return
 	}
@@ -85,7 +86,7 @@ func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Que
 	if err = c.orderGPRC.UpdateOrder(ctx, &orderpb.Order{
 		ID:          o.ID,
 		CustomerID:  o.CustomerID,
-		Status:      "ready",
+		Status:      consts.OrderStatusReady,
 		Items:       convertor.NewItemConvertor().EntitiesToProtos(o.Items),
 		PaymentLink: o.PaymentLink,
 	}); err != nil {

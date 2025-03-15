@@ -37,8 +37,10 @@ func setOutPut(logger *logrus.Logger) {
 		panic(err)
 	}
 
+	// 每次启动程序都清空日志, 输出到 log/app.log
 	logger.SetOutput(file)
 
+	// 持久化日志, 按日期分割, 输出到 log/app.log.%Y%m%d, 提供链接 ../app.log
 	rotateInfo, err := rotatelogs.New(
 		folder+filePath+".%Y%m%d",
 		rotatelogs.WithLinkName("app.log"),

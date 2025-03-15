@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hmmm42/gorder-v2/common/broker"
+	"github.com/hmmm42/gorder-v2/common/consts"
 	"github.com/hmmm42/gorder-v2/common/entity"
 	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/pkg/errors"
@@ -84,7 +85,7 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 				Body: entity.NewOrder(
 					session.Metadata["orderID"],
 					session.Metadata["customerID"],
-					string(stripe.CheckoutSessionPaymentStatusPaid),
+					consts.OrderStatusPaid,
 					session.Metadata["paymentLink"],
 					items,
 				),
