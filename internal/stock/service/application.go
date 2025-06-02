@@ -17,7 +17,8 @@ func NewApplication(_ context.Context) app.Application {
 	db := persistent.NewMySQL()
 	stockRepo := adapters.NewMySQLStockRepository(db)
 	logger := logrus.StandardLogger()
-	stripeAPI := integration.NewStripeAPI()
+	//stripeAPI := integration.NewStripeAPI()
+	stripeAPI := integration.NewMockStripeAPI()
 	metricClient := metrics.NewPrometheusMetricsClient(&metrics.PrometheusMetricsClientConfig{
 		Host:        viper.GetString("stock.metrics_export_addr"),
 		ServiceName: viper.GetString("stock.service-name"),

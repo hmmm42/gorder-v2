@@ -70,7 +70,8 @@ func main() {
 		ports.RegisterHandlersWithOptions(router, HTTPServer{
 			app: application,
 		}, ports.GinServerOptions{
-			BaseURL:      "/api",
+			BaseURL: "/api",
+			// TODO: 增加鉴权中间件
 			Middlewares:  nil,
 			ErrorHandler: nil,
 		})

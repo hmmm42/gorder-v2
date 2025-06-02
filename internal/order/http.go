@@ -21,6 +21,7 @@ type HTTPServer struct {
 }
 
 func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID string) {
+	// 路径中的 customerID 实际上没有使用, 使用了表单 json 的 customerID
 	var (
 		req  client.CreateOrderRequest
 		resp dto.CreateOrderResponse

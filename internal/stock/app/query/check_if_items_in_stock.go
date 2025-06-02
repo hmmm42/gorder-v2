@@ -27,12 +27,13 @@ type CheckIfItemsInStockHandler decorator.QueryHandler[CheckIfItemsInStock, []*e
 
 type checkIfItemsInStockHandler struct {
 	stockRepo domain.Repository
-	stripeAPI *integration.StripeAPI
+	//stripeAPI *integration.StripeAPI
+	stripeAPI integration.StripeProductFetcher
 }
 
 func NewCheckIfItemsInStockHandler(
 	stockRepo domain.Repository,
-	stripeAPI *integration.StripeAPI,
+	stripeAPI integration.StripeProductFetcher,
 	logger *logrus.Logger,
 	metricClient decorator.MetricsClient,
 ) CheckIfItemsInStockHandler {

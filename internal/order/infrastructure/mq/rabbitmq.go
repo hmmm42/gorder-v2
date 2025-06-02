@@ -16,6 +16,7 @@ func NewRabbitMQEventPublisher(channel *amqp.Channel) *RabbitMQEventPublisher {
 	return &RabbitMQEventPublisher{Channel: channel}
 }
 
+// Publish 传入的Exchange为空, 直接路由到Queue对应的队列, 即 EventOrderCreated
 func (r RabbitMQEventPublisher) Publish(ctx context.Context, event domain.DomainEvent) error {
 	return broker.PublishEvent(ctx, broker.PublishEventReq{
 		Channel:  r.Channel,
