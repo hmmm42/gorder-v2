@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/hmmm42/gorder-v2/common/discovery/consul"
@@ -18,7 +19,14 @@ func RegisterToConsul(ctx context.Context, serviceName string) (func() error, er
 	}
 	instanceID := GenerateInstanceID(serviceName)
 	grpcAddr := viper.Sub(serviceName).GetString("grpc-addr")
-	if err := registry.Register(ctx, instanceID, serviceName, grpcAddr); err != nil {
+	metricsAddr := viper.Sub(serviceName).GetString("metrics_export_addr")
+
+	metricsPort := strings.Split(metricsAddr, ":")[1]
+	meta := map[string]string{
+		"metrics_port": metricsPort,
+	}
+
+	if err := registry.Register(ctx, instanceID, serviceName, grpcAddr, meta); err != nil {
 		return func() error { return nil }, err
 	}
 	go func() {
@@ -32,6 +40,7 @@ func RegisterToConsul(ctx context.Context, serviceName string) (func() error, er
 	logrus.WithFields(logrus.Fields{
 		"serviceName": serviceName,
 		"addr":        grpcAddr,
+		"meta":        meta,
 	}).Info("register to consul")
 	return func() error {
 		return registry.Deregister(ctx, instanceID, serviceName)

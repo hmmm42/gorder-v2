@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hmmm42/gorder-v2/common/broker"
@@ -19,11 +20,18 @@ import (
 	"google.golang.org/grpc"
 )
 
+var port = flag.Int("port", 0, "gRPC server port, if not set, will use config value")
+
 func init() {
 	logging.Init()
 }
 
 func main() {
+	//flag.Parse()
+	//var servicePort string
+	//if *port != 0 {
+	//	servicePort = strconv.Itoa(*port)
+	//}
 	serviceName := viper.GetString("order.service-name")
 
 	ctx, cancel := context.WithCancel(context.Background())

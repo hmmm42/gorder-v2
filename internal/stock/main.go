@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 
 	_ "github.com/hmmm42/gorder-v2/common/config"
 	"github.com/hmmm42/gorder-v2/common/discovery"
@@ -17,6 +19,16 @@ import (
 )
 
 func init() {
+	var port = flag.Int("port", 0, "gRPC server port, if not set, will use config value")
+	flag.Parse()
+	if *port != 0 {
+		newAddr := fmt.Sprintf("127.0.0.1:%d", *port)
+		metricsPort := *port + 10000
+		newMetricsAddr := fmt.Sprintf("127.0.0.1:%d", metricsPort)
+		viper.Set("stock.grpc-addr", newAddr)
+		viper.Set("stock.metrics_export_addr", newMetricsAddr)
+	}
+
 	logging.Init()
 }
 

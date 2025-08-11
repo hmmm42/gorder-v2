@@ -39,7 +39,7 @@ func New(consulAddr string) (*Registry, error) {
 	return consulClient, nil
 }
 
-func (r *Registry) Register(_ context.Context, instanceID, serviceName, hostPort string) error {
+func (r *Registry) Register(_ context.Context, instanceID, serviceName, hostPort string, meta map[string]string) error {
 	parts := strings.Split(hostPort, ":")
 	if len(parts) != 2 {
 		return errors.New("invalid host:port format")
@@ -51,6 +51,7 @@ func (r *Registry) Register(_ context.Context, instanceID, serviceName, hostPort
 		Address: host,
 		Port:    port,
 		Name:    serviceName,
+		Meta:    meta,
 		Check: &api.AgentServiceCheck{
 			CheckID:                        instanceID,
 			TLSSkipVerify:                  false,

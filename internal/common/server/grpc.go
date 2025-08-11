@@ -22,7 +22,6 @@ func init() {
 func RunGRPCServer(serviceName string, registerServer func(server *grpc.Server)) {
 	addr := viper.Sub(serviceName).GetString("grpc-addr")
 	if addr == "" {
-		// TODO: Warning log
 		addr = viper.GetString("fallback-grpc-addr")
 	}
 	RunGRPCServerOnAddr(addr, registerServer)

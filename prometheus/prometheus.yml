@@ -1,13 +1,33 @@
 global:
-  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  scrape_interval:     15s
   evaluation_interval: 15s
 
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: 'demo-metrics'
-    metrics_path: /metrics
+  - job_name: 'consul-services'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: []
+
+    relabel_configs:
+      # 规则1: 只保留有 'metrics_port' 元数据的服务
+      - source_labels: [__meta_consul_service_metadata_metrics_port]
+        regex: .+
+        action: keep
+
+      # 规则2: 将地址的主机部分硬编码为 'host.docker.internal'，并使用元数据中的端口。
+      # 这会忽略服务注册时提供的IP地址(127.0.0.1)，解决容器网络问题。
+      - source_labels: [__meta_consul_service_address, __meta_consul_service_metadata_metrics_port]
+        regex: (.*);(.+)
+        replacement: 'host.docker.internal:$2'
+        target_label: __address__
+
+      # 规则3: 设置 instance 标签为服务名
+      - source_labels: [__meta_consul_service]
+        target_label: instance
+
+      # 规则4: 设置 job 标签为服务名
+      - source_labels: [__meta_consul_service]
+        target_label: job
+
     scrape_interval: 5s
-    static_configs:
-      - targets: ['host.docker.internal:9123', 'host.docker.internal:9124', 'host.docker.internal:9125']
+    metrics_path: /metrics

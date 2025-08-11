@@ -217,7 +217,7 @@ func (h checkIfItemsInStockHandler) acquireSemaphores(ctx context.Context, items
 		}
 
 		// 设置过期时间，防止死锁
-		redis.Expire(ctx, redis.LocalClient(), redisSemaphorePrefix+item.ID, 30*time.Second)
+		_, _ = redis.Expire(ctx, redis.LocalClient(), redisSemaphorePrefix+item.ID, 30*time.Second)
 		acquiredItems = append(acquiredItems, item)
 	}
 	return nil

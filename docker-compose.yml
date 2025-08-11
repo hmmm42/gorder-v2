@@ -6,6 +6,11 @@ services:
     ports:
       - 8500:8500
       - 8600:8600/udp
+    healthcheck:
+      test: ["CMD", "consul", "info"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   rabbit-mq:
     image: "rabbitmq:3-management"
@@ -55,6 +60,9 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
       - 9090:9090
+    depends_on:
+      consul:
+        condition: service_healthy
 
   grafana:
     image: grafana/grafana

@@ -2,11 +2,10 @@ package client
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net"
 	"time"
 
-	"github.com/hmmm42/gorder-v2/common/discovery"
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
 	"github.com/hmmm42/gorder-v2/common/genproto/stockpb"
 	"github.com/sirupsen/logrus"
@@ -14,21 +13,24 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	_ "github.com/mbobakov/grpc-consul-resolver"
 )
 
 func NewStockGRPCClient(ctx context.Context) (client stockpb.StockServiceClient, close func() error, err error) {
-	if !WaitForStockGRPCClient(viper.GetDuration("dial-grpc-timeout") * time.Second) {
-		return nil, nil, errors.New("stock grpc not available")
-	}
-	grpcAddr, err := discovery.GetServiceAddr(ctx, viper.GetString("stock.service-name"))
-	if err != nil {
-		return nil, func() error {
-			return nil
-		}, err
-	}
-	if grpcAddr == "" {
-		logrus.Warn("empty grpc addr for stock grpc")
-	}
+	//if !WaitForStockGRPCClient(viper.GetDuration("dial-grpc-timeout") * time.Second) {
+	//	return nil, nil, errors.New("stock grpc not available")
+	//}
+	//grpcAddr, err := discovery.GetServiceAddr(ctx, viper.GetString("stock.service-name"))
+	//if err != nil {
+	//	return nil, func() error {
+	//		return nil
+	//	}, err
+	//}
+	//if grpcAddr == "" {
+	//	logrus.Warn("empty grpc addr for stock grpc")
+	//}
+	grpcAddr := fmt.Sprintf("consul://%s/%s", viper.GetString("consul.addr"), viper.GetString("stock.service-name"))
 	opts := grpcDialOpts(grpcAddr)
 
 	conn, err := grpc.NewClient(grpcAddr, opts...)
@@ -41,16 +43,17 @@ func NewStockGRPCClient(ctx context.Context) (client stockpb.StockServiceClient,
 }
 
 func NewOrderGRPCClient(ctx context.Context) (client orderpb.OrderServiceClient, close func() error, err error) {
-	if !WaitForOrderGRPCClient(viper.GetDuration("dial-grpc-timeout") * time.Second) {
-		return nil, nil, errors.New("order grpc not available")
-	}
-	grpcAddr, err := discovery.GetServiceAddr(ctx, viper.GetString("order.service-name"))
-	if err != nil {
-		return nil, func() error { return nil }, err
-	}
-	if grpcAddr == "" {
-		logrus.Warn("empty grpc addr for order grpc")
-	}
+	//if !WaitForOrderGRPCClient(viper.GetDuration("dial-grpc-timeout") * time.Second) {
+	//	return nil, nil, errors.New("order grpc not available")
+	//}
+	//grpcAddr, err := discovery.GetServiceAddr(ctx, viper.GetString("order.service-name"))
+	//if err != nil {
+	//	return nil, func() error { return nil }, err
+	//}
+	//if grpcAddr == "" {
+	//	logrus.Warn("empty grpc addr for order grpc")
+	//}
+	grpcAddr := fmt.Sprintf("consul://%s/%s", viper.GetString("consul.addr"), viper.GetString("order.service-name"))
 	opts := grpcDialOpts(grpcAddr)
 	conn, err := grpc.NewClient(grpcAddr, opts...)
 	if err != nil {
@@ -63,6 +66,7 @@ func grpcDialOpts(_ string) []grpc.DialOption {
 	return []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
 	}
 }
 
