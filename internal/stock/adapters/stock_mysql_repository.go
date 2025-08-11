@@ -30,8 +30,8 @@ func (m MySQLStockRepository) UpdateStock(
 				logrus.Warnf("update stock transaction err=%v", err)
 			}
 		}()
-		err = m.updatePessimistic(ctx, tx, data, updateFn)
-		//err = m.updateOptimistic(ctx, tx, data, updateFn)
+		//err = m.updatePessimistic(ctx, tx, data, updateFn)
+		err = m.updateOptimistic(ctx, tx, data, updateFn)
 		return err
 	})
 }
@@ -97,24 +97,18 @@ func (m MySQLStockRepository) updatePessimistic(
 		return err
 	}
 
-	// Create a map for quick lookup of query quantities by ID
-	queryMap := make(map[string]int32)
-	for _, query := range data {
-		queryMap[query.ID] = query.Quantity
-	}
-
 	// Process each updated item
 	for _, upd := range updated {
-		if queryQty, exists := queryMap[upd.ID]; exists {
-			if err = m.db.Update(ctx, tx, builder.NewStock().ProductIDs(upd.ID).QuantityGT(queryQty),
+		for _, query := range data {
+			if upd.ID != query.ID {
+				continue
+			}
+			if err = m.db.Update(ctx, tx, builder.NewStock().ProductIDs(upd.ID).QuantityGT(query.Quantity),
 				map[string]any{
-					//"quantity": upd.Quantity,
-					"quantity": gorm.Expr("quantity - ?", queryQty),
+					"quantity": gorm.Expr("quantity - ?", query.Quantity),
 				}); err != nil {
 				return errors.Wrapf(err, "unable to update %s", upd.ID)
 			}
-		} else {
-			return errors.Errorf("item %s not found in query data", upd.ID)
 		}
 	}
 	return nil
@@ -128,50 +122,26 @@ func (m MySQLStockRepository) updateOptimistic(
 	) ([]*entity.ItemWithQuantity, error)) error {
 
 	for _, queryData := range data {
-		var newestRecord *persistent.StockModel
-		newestRecord, err := m.db.GetStockByID(ctx, builder.NewStock().ProductIDs(queryData.ID))
-		if err != nil {
-			return err
-		}
-		if err = m.db.Update(
+		//var newestRecord *persistent.StockModel
+		//newestRecord, err := m.db.GetStockByID(ctx, builder.NewStock().ProductIDs(queryData.ID))
+		//if err != nil {
+		//	return err
+		//}
+		if err := m.db.Update(
 			ctx,
 			tx,
-			builder.NewStock().ProductIDs(queryData.ID).Versions(newestRecord.Version).QuantityGT(queryData.Quantity),
+			//builder.NewStock().ProductIDs(queryData.ID).Versions(newestRecord.Version).QuantityGT(queryData.Quantity),
+			//map[string]any{
+			//	"quantity": gorm.Expr("quantity - ?", queryData.Quantity),
+			//	"version":  newestRecord.Version + 1,
+			//}); err != nil {
+			builder.NewStock().ProductIDs(queryData.ID).QuantityGT(queryData.Quantity),
 			map[string]any{
 				"quantity": gorm.Expr("quantity - ?", queryData.Quantity),
-				"version":  newestRecord.Version + 1,
 			}); err != nil {
 			return err
 		}
 	}
 
-	//existing := m.unmarshalFromDatabase(dest)
-	//
-	//// Call the updateFn to determine the new quantities
-	//updated, err := updateFn(ctx, existing, data)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//// Process each item that needs updating
-	//for _, upd := range updated {
-	//	// Find the original item to get its version
-	//	var record persistent.StockModel
-	//	if err := builder.NewStock().ProductIDs(upd.ID).
-	//		Fill(tx.Model(&persistent.StockModel{})).
-	//		First(&record).Error; err != nil {
-	//		return errors.Wrapf(err, "unable to find record for %s", upd.ID)
-	//	}
-	//
-	//	// Update with optimistic locking using version
-	//	if err := builder.NewStock().ProductIDs(upd.ID).Versions(record.Version).QuantityGT(upd.Quantity).
-	//		Fill(tx.Model(&persistent.StockModel{})).
-	//		Updates(map[string]any{
-	//			"quantity": gorm.Expr("quantity - ?", upd.Quantity),
-	//			"version":  record.Version + 1,
-	//		}).Error; err != nil {
-	//		return errors.Wrapf(err, "unable to update %s", upd.ID)
-	//	}
-	//}
 	return nil
 }
