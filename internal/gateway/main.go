@@ -8,11 +8,12 @@ import (
 	"net/url"
 
 	_ "github.com/hmmm42/gorder-v2/common/config"
-	"github.com/hmmm42/gorder-v2/common/logging"
-	"github.com/sirupsen/logrus"
-
 	"github.com/hmmm42/gorder-v2/common/discovery"
+	"github.com/hmmm42/gorder-v2/common/logging"
+	"github.com/hmmm42/gorder-v2/common/middleware"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 )
 
 // ServiceDiscoverer 定义了一个服务发现器的接口
@@ -39,8 +40,7 @@ func main() {
 	// 创建一个反向代理, 并为其配置一个动态的 Director
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
-			targetService := "order"
-			// TODO: 支持多服务, 可以从请求头或路径中获取目标服务名
+			targetService := "order-http"
 
 			// 从服务发现器中挑选一个健康的目标实例地址
 			targetAddr, err := discoverer.Pick(targetService)
@@ -59,7 +59,12 @@ func main() {
 		},
 	}
 
-	http.HandleFunc("/", proxy.ServeHTTP)
+	// 创建一个限流中间件：每个IP每秒2个请求，桶容量为5
+	rateLimitMiddleware := middleware.CreateRateLimitMiddleware(rate.Limit(2), 5)
+
+	// 使用限流中间件包装代理处理器
+	http.Handle("/", rateLimitMiddleware(proxy))
+
 	gatewayAddr := viper.Sub("gateway").GetString("http-addr")
 	logrus.Infof("Starting gateway server on %s", gatewayAddr)
 	if err := http.ListenAndServe(gatewayAddr, nil); err != nil {

@@ -1,22 +1,44 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"net"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
-	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
-	grpc_tags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	log "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 )
 
-func init() {
-	logger := logrus.New()
-	logger.SetLevel(logrus.WarnLevel)
-	grpc_logrus.ReplaceGrpcLogger(logrus.NewEntry(logger))
+// v2 需要一个适配器将 logrus.Entry 转换为其期望的 Logger 接口
+func interceptorLogger(l *logrus.Entry) log.Logger {
+	return log.LoggerFunc(func(ctx context.Context, lvl log.Level, msg string, fields ...any) {
+		f := make(map[string]any, len(fields)/2)
+		i := log.Fields(fields).Iterator()
+		for i.Next() {
+			k, v := i.At()
+			f[k] = v
+		}
+		l := l.WithFields(f)
+
+		switch lvl {
+		case log.LevelDebug:
+			l.Debug(msg)
+		case log.LevelInfo:
+			l.Info(msg)
+		case log.LevelWarn:
+			l.Warn(msg)
+		case log.LevelError:
+			l.Error(msg)
+		default:
+			panic(fmt.Sprintf("unknown level %v", lvl))
+		}
+	})
 }
 
 func RunGRPCServer(serviceName string, registerServer func(server *grpc.Server)) {
@@ -29,17 +51,20 @@ func RunGRPCServer(serviceName string, registerServer func(server *grpc.Server))
 
 func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) {
 	logrusEntry := logrus.NewEntry(logrus.StandardLogger())
+	logEvents := []log.LoggableEvent{
+		log.StartCall, log.FinishCall,
+	}
+
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
-		// 中间件
 		grpc.ChainUnaryInterceptor(
-			grpc_tags.UnaryServerInterceptor(grpc_tags.WithFieldExtractor(grpc_tags.CodeGenRequestFieldExtractor)),
-			grpc_logrus.UnaryServerInterceptor(logrusEntry),
+			recovery.UnaryServerInterceptor(),
+			log.UnaryServerInterceptor(interceptorLogger(logrusEntry), log.WithLogOnEvents(logEvents...)),
 			logging.GRPCUnaryInterceptor,
 		),
 		grpc.ChainStreamInterceptor(
-			grpc_tags.StreamServerInterceptor(grpc_tags.WithFieldExtractor(grpc_tags.CodeGenRequestFieldExtractor)),
-			grpc_logrus.StreamServerInterceptor(logrusEntry),
+			recovery.StreamServerInterceptor(),
+			log.StreamServerInterceptor(interceptorLogger(logrusEntry), log.WithLogOnEvents(logEvents...)),
 		),
 	)
 	registerServer(grpcServer)

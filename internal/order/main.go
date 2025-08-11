@@ -65,6 +65,14 @@ func main() {
 		_ = deregisterFunc()
 	}()
 
+	deregisterHTTPFunc, err := discovery.RegisterHTTPToConsul(ctx, serviceName)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() {
+		_ = deregisterHTTPFunc()
+	}()
+
 	ch, closeCh := broker.Connect(
 		viper.GetString("rabbitmq.user"),
 		viper.GetString("rabbitmq.password"),

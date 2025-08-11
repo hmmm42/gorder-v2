@@ -10,7 +10,7 @@ consul:
 gateway:
   service-name: gateway
   server-to-run: http
-  http-addr: 127.0.0.1:8181
+  http-addr: 127.0.0.1:8281
   metrics_export_addr: 127.0.0.1:9121
 
 order:

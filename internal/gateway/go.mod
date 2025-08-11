@@ -8,6 +8,7 @@ require (
 	github.com/hmmm42/gorder-v2/common v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.20.1
+	golang.org/x/time v0.8.0
 )
 
 require (

@@ -4,7 +4,7 @@ go 1.22.8
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/hashicorp/consul/api v1.28.2
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mbobakov/grpc-consul-resolver v1.5.3
@@ -15,6 +15,7 @@ require (
 	github.com/redis/go-redis/v9 v9.7.1
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.9.0
+	github.com/sony/gobreaker v1.0.0
 	github.com/spf13/viper v1.19.0
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.59.0
@@ -48,7 +49,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.24.0 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
