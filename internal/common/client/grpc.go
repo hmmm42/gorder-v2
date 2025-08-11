@@ -3,12 +3,9 @@ package client
 import (
 	"context"
 	"fmt"
-	"net"
-	"time"
 
 	"github.com/hmmm42/gorder-v2/common/genproto/orderpb"
 	"github.com/hmmm42/gorder-v2/common/genproto/stockpb"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -70,41 +67,41 @@ func grpcDialOpts(_ string) []grpc.DialOption {
 	}
 }
 
-func WaitForOrderGRPCClient(timeout time.Duration) bool {
-	logrus.Infof("waiting for order grpc client, timeout: %v seconds", timeout.Seconds())
-	return waitFor(viper.GetString("order.grpc-addr"), timeout)
-}
+//func WaitForOrderGRPCClient(timeout time.Duration) bool {
+//	logrus.Infof("waiting for order grpc client, timeout: %v seconds", timeout.Seconds())
+//	return waitFor(viper.GetString("order.grpc-addr"), timeout)
+//}
+//
+//func WaitForStockGRPCClient(timeout time.Duration) bool {
+//	logrus.Infof("waiting for stock grpc client, timeout: %v seconds", timeout.Seconds())
+//	return waitFor(viper.GetString("stock.grpc-addr"), timeout)
+//}
 
-func WaitForStockGRPCClient(timeout time.Duration) bool {
-	logrus.Infof("waiting for stock grpc client, timeout: %v seconds", timeout.Seconds())
-	return waitFor(viper.GetString("stock.grpc-addr"), timeout)
-}
-
-func waitFor(addr string, timeout time.Duration) bool {
-	portAvailable := make(chan struct{})
-	timeoutCh := time.After(timeout)
-
-	go func() {
-		for {
-			select {
-			case <-timeoutCh:
-				return
-			default:
-				// continue
-			}
-			_, err := net.Dial("tcp", addr)
-			if err == nil {
-				close(portAvailable)
-				return
-			}
-			time.Sleep(200 * time.Millisecond)
-		}
-	}()
-
-	select {
-	case <-portAvailable:
-		return true
-	case <-timeoutCh:
-		return false
-	}
-}
+//func waitFor(addr string, timeout time.Duration) bool {
+//	portAvailable := make(chan struct{})
+//	timeoutCh := time.After(timeout)
+//
+//	go func() {
+//		for {
+//			select {
+//			case <-timeoutCh:
+//				return
+//			default:
+//				// continue
+//			}
+//			_, err := net.Dial("tcp", addr)
+//			if err == nil {
+//				close(portAvailable)
+//				return
+//			}
+//			time.Sleep(200 * time.Millisecond)
+//		}
+//	}()
+//
+//	select {
+//	case <-portAvailable:
+//		return true
+//	case <-timeoutCh:
+//		return false
+//	}
+//}

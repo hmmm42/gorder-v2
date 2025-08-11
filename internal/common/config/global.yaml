@@ -7,6 +7,12 @@ jaeger:
 consul:
   addr: 127.0.0.1:8500
 
+gateway:
+  service-name: gateway
+  server-to-run: http
+  http-addr: 127.0.0.1:8181
+  metrics_export_addr: 127.0.0.1:9121
+
 order:
   service-name: order
   server-to-run: http
