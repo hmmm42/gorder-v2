@@ -47,14 +47,16 @@ func NewCheckIfItemsInStockHandler(
 	if stripeAPI == nil {
 		panic("nil stripeAPI")
 	}
-	return decorator.ApplyQueryDecorators[CheckIfItemsInStock, []*entity.Item](
+	return decorator.WithQueryIdempotency(decorator.ApplyQueryDecorators[CheckIfItemsInStock, []*entity.Item](
 		checkIfItemsInStockHandler{
 			stockRepo: stockRepo,
 			stripeAPI: stripeAPI,
 		},
 		logger,
 		metricClient,
-	)
+	), decorator.IdempotencyOptions{
+		Store: redis.NewRedisIdempotencyStore(redis.LocalClient()),
+	})
 }
 
 // Deprecated

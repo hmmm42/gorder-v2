@@ -16,13 +16,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// ServiceDiscoverer 定义了一个服务发现器的接口
-type ServiceDiscoverer interface {
-	// Pick 方法从指定服务的所有健康实例中选择一个
-	Pick(serviceName string) (string, error)
-}
-
-// consulDiscoverer 是一个基于 Consul 的服务发现器实现
 type consulDiscoverer struct{}
 
 func (c *consulDiscoverer) Pick(serviceName string) (string, error) {
@@ -59,8 +52,8 @@ func main() {
 		},
 	}
 
-	// 创建一个限流中间件：每个IP每秒2个请求，桶容量为5
-	rateLimitMiddleware := middleware.CreateRateLimitMiddleware(rate.Limit(2), 5)
+	// 创建一个限流中间件：每个IP每秒5个请求，桶容量为50
+	rateLimitMiddleware := middleware.CreateRateLimitMiddleware(rate.Limit(5), 50)
 
 	// 使用限流中间件包装代理处理器
 	http.Handle("/", rateLimitMiddleware(proxy))

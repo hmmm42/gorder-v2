@@ -8,6 +8,7 @@ import (
 	"github.com/hmmm42/gorder-v2/common/convertor"
 	"github.com/hmmm42/gorder-v2/common/decorator"
 	"github.com/hmmm42/gorder-v2/common/entity"
+	"github.com/hmmm42/gorder-v2/common/handler/redis"
 	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/hmmm42/gorder-v2/order/app/query"
 	domain "github.com/hmmm42/gorder-v2/order/domain/order"
@@ -51,7 +52,8 @@ func NewCreateOrderHandler(
 	if eventPublisher == nil {
 		panic("eventPublisher is nil")
 	}
-	return decorator.ApplyCommandDecorators[CreateOrder, *CreateOrderResult](
+	// TODO: 改成依赖注入
+	return decorator.WithCommandIdempotency(decorator.ApplyCommandDecorators[CreateOrder, *CreateOrderResult](
 		createOrderHandler{
 			orderRepo:      orderRepo,
 			stockGRPC:      stockGRPC,
@@ -59,7 +61,9 @@ func NewCreateOrderHandler(
 		},
 		logger,
 		metricClient,
-	)
+	), decorator.IdempotencyOptions{
+		Store: redis.NewRedisIdempotencyStore(redis.LocalClient()),
+	})
 }
 
 func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*CreateOrderResult, error) {

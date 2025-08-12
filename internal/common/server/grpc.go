@@ -6,11 +6,13 @@ import (
 	"net"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/hmmm42/gorder-v2/common/contextkeys"
 	"github.com/hmmm42/gorder-v2/common/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	log "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 )
@@ -61,6 +63,7 @@ func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) 
 			recovery.UnaryServerInterceptor(),
 			log.UnaryServerInterceptor(interceptorLogger(logrusEntry), log.WithLogOnEvents(logEvents...)),
 			logging.GRPCUnaryInterceptor,
+			IdempotencyExtractorInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
 			recovery.StreamServerInterceptor(),
@@ -76,5 +79,21 @@ func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) 
 	logrus.Infof("Starting gRPC server, Listening: %s", addr)
 	if err := grpcServer.Serve(listen); err != nil {
 		logrus.Panic(err)
+	}
+}
+
+func IdempotencyExtractorInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			keys := md.Get(contextkeys.IdempotencyMetadataKey)
+			if len(keys) > 0 {
+				// 从 gRPC 的传入元数据中读出值,
+				// 并把它写入一个新的 context, 这个 context 将被传递给业务代码.
+				ctx = contextkeys.NewContext(ctx, keys[0])
+			}
+		}
+		// 把包含了新值的 ctx 传递下去
+		return handler(ctx, req)
 	}
 }

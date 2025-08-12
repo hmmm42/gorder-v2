@@ -58,8 +58,9 @@ func grpcDialOpts(_ string) []grpc.DialOption {
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
 		grpc.WithChainUnaryInterceptor(
-			NewBreakerInterceptor().UnaryClientInterceptor,
+			idempotencyKeyToMetadataInterceptor(),
 			timeout.UnaryClientInterceptor(defaultTimeout),
+			NewBreakerInterceptor().UnaryClientInterceptor,
 			retry.UnaryClientInterceptor(retryOpts...),
 		),
 	}

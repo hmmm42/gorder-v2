@@ -31,4 +31,5 @@ func setMiddleware(r *gin.Engine) {
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestLog(logrus.NewEntry(logrus.StandardLogger())))
 	r.Use(otelgin.Middleware("default_server"))
+	r.Use(middleware.IdempotencyMiddleware())
 }

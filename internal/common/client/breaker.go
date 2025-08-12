@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -47,7 +48,7 @@ func (bi *BreakerInterceptor) UnaryClientInterceptor(
 	// 如果 err 不是 nil，意味着熔断器跳闸了 (例如状态为 Open 或 Half-Open 时拒绝请求)
 	if err != nil {
 		// 将 gobreaker 的错误转换为 gRPC 错误，以便客户端能够理解
-		if err == gobreaker.ErrOpenState || err == gobreaker.ErrTooManyRequests {
+		if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
 			return status.Errorf(codes.Unavailable, "circuit breaker is open for method %s", method)
 		}
 		// 在其他情况下，返回 gobreaker 可能产生的其他错误
