@@ -109,7 +109,7 @@ func WithQueryIdempotency[Q, R any](handler QueryHandler[Q, R], opts Idempotency
 		opts.TTL = 5 * time.Minute // 默认TTL为5分钟
 	}
 	if opts.KeyPrefix == "" {
-		opts.KeyPrefix = "idempotency"
+		opts.KeyPrefix = "idempotency:query"
 	}
 	return idempotencyDecorator[Q, R]{
 		base:      handler,

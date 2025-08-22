@@ -52,7 +52,7 @@ func main() {
 		},
 	}
 
-	// 创建一个限流中间件：每个IP每秒5个请求，桶容量为50
+	// 创建一个限流中间件：每个IP: 每秒补充5个请求，桶容量为50
 	rateLimitMiddleware := middleware.CreateRateLimitMiddleware(rate.Limit(5), 50)
 
 	// 使用限流中间件包装代理处理器

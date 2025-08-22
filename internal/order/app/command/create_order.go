@@ -74,7 +74,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderCreated))
 	defer span.End()
 
-	validItems, err := c.validate(ctx, cmd.Items)
+	validItems, err := c.validate(ctx, cmd.Items) // 内部调用了stock, 同时进行库存校验和订单扣减
 	if err != nil {
 		return nil, err
 	}

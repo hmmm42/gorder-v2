@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 
+	_ "github.com/hmmm42/gorder-v2/common/client/balancer" // 导入以注册节点级别熔断器
 	_ "github.com/mbobakov/grpc-consul-resolver"
 )
 
@@ -50,18 +51,17 @@ func grpcDialOpts(_ string) []grpc.DialOption {
 		retry.WithBackoff(retry.BackoffExponential(100 * time.Millisecond)),
 		retry.WithMax(3),
 		retry.WithPerRetryTimeout(defaultTimeout),
-		retry.WithCodes(codes.Unavailable, codes.ResourceExhausted),
+		retry.WithCodes(codes.Unavailable, codes.ResourceExhausted, codes.DeadlineExceeded),
 	}
 
 	return []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "node_breaker"}`),
 		grpc.WithChainUnaryInterceptor(
 			idempotencyKeyToMetadataInterceptor(),
-			timeout.UnaryClientInterceptor(defaultTimeout),
-			NewBreakerInterceptor().UnaryClientInterceptor,
 			retry.UnaryClientInterceptor(retryOpts...),
+			timeout.UnaryClientInterceptor(defaultTimeout),
 		),
 	}
 }

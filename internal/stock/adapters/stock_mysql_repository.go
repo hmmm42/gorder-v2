@@ -121,20 +121,11 @@ func (m MySQLStockRepository) updateOptimistic(
 	updateFn func(ctx context.Context, existing []*entity.ItemWithQuantity, query []*entity.ItemWithQuantity,
 	) ([]*entity.ItemWithQuantity, error)) error {
 
+	// TODO: 将所有需要扣减库存的商品id下方到事务中, 由事务保证要么全部成功要么全部失败
 	for _, queryData := range data {
-		//var newestRecord *persistent.StockModel
-		//newestRecord, err := m.db.GetStockByID(ctx, builder.NewStock().ProductIDs(queryData.ID))
-		//if err != nil {
-		//	return err
-		//}
 		if err := m.db.Update(
 			ctx,
 			tx,
-			//builder.NewStock().ProductIDs(queryData.ID).Versions(newestRecord.Version).QuantityGT(queryData.Quantity),
-			//map[string]any{
-			//	"quantity": gorm.Expr("quantity - ?", queryData.Quantity),
-			//	"version":  newestRecord.Version + 1,
-			//}); err != nil {
 			builder.NewStock().ProductIDs(queryData.ID).QuantityGT(queryData.Quantity),
 			map[string]any{
 				"quantity": gorm.Expr("quantity - ?", queryData.Quantity),

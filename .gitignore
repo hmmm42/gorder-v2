@@ -35,3 +35,4 @@ mysql_data
 data
 **/log
 *.log
+/.kilocode/
